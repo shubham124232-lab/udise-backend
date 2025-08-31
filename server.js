@@ -27,6 +27,11 @@ mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/udise-das
 app.use('/api/auth', authRoutes);
 app.use('/api/data', dataRoutes);
 
+// Root route (test)
+app.get("/", (req, res) => {
+    res.send("✅ UDISE Dashboard Backend is running...");
+});
+
 // Health check endpoint
 app.get('/health', (req, res) => {
     res.json({ status: 'OK', message: 'UDISE Dashboard API is running' });
