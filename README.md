@@ -9,7 +9,7 @@ A robust Node.js backend API for the UDISE Dashboard, providing comprehensive sc
 - **Hierarchical Filtering** - State → District → Block → Village level filtering
 - **Data Distribution** - Aggregated data for charts and analytics
 - **MongoDB Atlas** - Scalable cloud database with optimized schemas
-- **Data Import** - CSV data seeder with data cleaning and validation
+- **Data Import** - CSV data processor with validation and transformation
 - **RESTful API** - Clean, well-documented endpoints
 
 ## 🛠️ Tech Stack
@@ -67,11 +67,11 @@ The API will be available at `http://localhost:5000`
 Download the schools dataset from Kaggle and place it in the backend directory, then run:
 
 ```bash
-# Import all data (may take time for large datasets)
-npm run seed
+# Preprocess and transform CSV data
+npm run preprocess schools.csv transformed_schools.csv 800000
 
-# Import limited data (recommended for free MongoDB clusters)
-npm run seed:limit ./schools.csv 800000
+# Import transformed data to MongoDB
+npm run seed:limit transformed_schools.csv 800000
 ```
 
 ## 📊 API Endpoints
@@ -217,8 +217,10 @@ backend/
 
 - `npm start` - Start production server
 - `npm run dev` - Start development server with nodemon
+- `npm run preprocess` - Transform CSV data
 - `npm run seed` - Import CSV data
 - `npm run seed:limit` - Import limited CSV data
+- `npm run test:connection` - Test MongoDB connection
 
 ## 🚀 Deployment
 

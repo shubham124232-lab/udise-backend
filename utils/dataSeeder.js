@@ -23,65 +23,103 @@ const cleanNumber = (num) => {
     return parseInt(num) || 0;
 };
 
-const mapManagementType = (management) => {
-    const clean = cleanString(management).toLowerCase();
+// Map management type from CSV values to schema values
+const mapManagementType = (stateMgn) => {
+    const clean = cleanString(stateMgn);
     
-    if (clean.includes('government') || clean.includes('govt')) return 'Government';
-    if (clean.includes('private unaided') || clean.includes('private')) return 'Private Unaided';
-    if (clean.includes('aided')) return 'Private Aided';
-    if (clean.includes('central')) return 'Central Government';
-    return 'Other';
+    // Based on your CSV: 1-Department, 5-Private
+    switch (clean) {
+        case '1':
+        case '1-Department':
+            return 'Government';
+        case '5':
+        case '5-Private':
+            return 'Private Unaided';
+        case '2':
+        case '2-Tribal':
+            return 'Government';
+        case '3':
+        case '3-Minority':
+            return 'Private Aided';
+        case '4':
+        case '4-Other':
+            return 'Other';
+        default:
+            return 'Government'; // Default to Government
+    }
 };
 
+// Map location from CSV values to schema values
 const mapLocation = (location) => {
-    const clean = cleanString(location).toLowerCase();
+    const clean = cleanString(location);
     
-    if (clean.includes('rural')) return 'Rural';
-    if (clean.includes('urban')) return 'Urban';
-    return 'Rural'; // Default to Rural if unclear
+    // Based on your CSV: 1-Rural, 2-Urban
+    switch (clean) {
+        case '1':
+        case '1-Rural':
+            return 'Rural';
+        case '2':
+        case '2-Urban':
+            return 'Urban';
+        default:
+            return 'Rural'; // Default to Rural
+    }
 };
 
-const mapSchoolType = (type) => {
-    const clean = cleanString(type).toLowerCase();
+// Map school type from CSV values to schema values
+const mapSchoolType = (schoolTyp) => {
+    const clean = cleanString(schoolTyp);
     
-    if (clean.includes('girls') || clean.includes('girl')) return 'Girls';
-    if (clean.includes('boys') || clean.includes('boy')) return 'Boys';
-    return 'Co-Ed'; // Default to Co-Ed
+    // Based on your CSV: 3-Co-educational
+    switch (clean) {
+        case '3':
+        case '3-Co-educational':
+            return 'Co-Ed';
+        case '1':
+        case '1-Boys':
+            return 'Boys';
+        case '2':
+        case '2-Girls':
+            return 'Girls';
+        default:
+            return 'Co-Ed'; // Default to Co-Ed
+    }
 };
 
+// Process school data from CSV row to match schema
 const processSchoolData = (row) => {
     return {
-        udise_code: cleanString(row.udise_code || row.UDISE_CODE || row.udise),
-        school_name: cleanString(row.school_name || row.SCHOOL_NAME || row.school || row.name),
-        state: cleanString(row.state || row.STATE),
-        district: cleanString(row.district || row.DISTRICT),
-        block: cleanString(row.block || row.BLOCK),
-        village: cleanString(row.village || row.VILLAGE || row.town || row.city),
-        management: mapManagementType(row.management || row.MANAGEMENT || row.management_type),
-        location: mapLocation(row.location || row.LOCATION || row.rural_urban),
-        school_type: mapSchoolType(row.school_type || row.SCHOOL_TYPE || row.type),
-        establishment_year: cleanNumber(row.establishment_year || row.ESTABLISHMENT_YEAR || row.year),
-        total_students: cleanNumber(row.total_students || row.TOTAL_STUDENTS || row.students),
-        total_teachers: cleanNumber(row.total_teachers || row.TOTAL_TEACHERS || row.teachers),
+        udise_code: cleanString(row.udise_cod || row.udise_code), // CSV: udise_cod
+        school_name: cleanString(row.school_na || row.school_name), // CSV: school_na
+        state: cleanString(row.state),
+        district: cleanString(row.district),
+        block: cleanString(row.block),
+        village: cleanString(row.village),
+        management: mapManagementType(row.state_mgn), // CSV: state_mgn
+        location: mapLocation(row.location), // CSV: location
+        school_type: mapSchoolType(row.school_typ), // CSV: school_typ
+        establishment_year: cleanNumber(row.establishment_year || row.year),
+        total_students: cleanNumber(row.total_students || row.students),
+        total_teachers: cleanNumber(row.total_teachers || row.teachers),
         infrastructure: {
-            has_electricity: Boolean(row.electricity || row.ELECTRICITY),
-            has_drinking_water: Boolean(row.drinking_water || row.DRINKING_WATER),
-            has_toilets: Boolean(row.toilets || row.TOILETS),
-            has_library: Boolean(row.library || row.LIBRARY),
-            has_computer_lab: Boolean(row.computer_lab || row.COMPUTER_LAB)
+            has_electricity: Boolean(row.electricity || row.elec),
+            has_drinking_water: Boolean(row.drinking_water || row.water),
+            has_toilets: Boolean(row.toilets || row.toilet),
+            has_library: Boolean(row.library),
+            has_computer_lab: Boolean(row.computer_lab || row.comp_lab)
         },
         academic_performance: {
-            pass_percentage: cleanNumber(row.pass_percentage || row.PASS_PERCENTAGE),
-            dropout_rate: cleanNumber(row.dropout_rate || row.DROPOUT_RATE)
+            pass_percentage: cleanNumber(row.pass_percentage || row.pass_rate),
+            dropout_rate: cleanNumber(row.dropout_rate || row.dropout)
         },
         contact_info: {
-            phone: cleanString(row.phone || row.PHONE),
-            email: cleanString(row.email || row.EMAIL),
-            website: cleanString(row.website || row.WEBSITE)
+            phone: cleanString(row.phone || row.telephone),
+            email: cleanString(row.email),
+            website: cleanString(row.website || row.web)
         },
         coordinates: {
-            latitude: parseFloat(row.latitude || row.LATITUDE) || null,
-            longitude: parseFloat(row.longitude || row.LONGITUDE) || null
+            latitude: parseFloat(row.latitude || row.lat) || null,
+            longitude: parseFloat(row.longitude || row.lng) || null
         }
     };
 };

@@ -4,22 +4,18 @@ const { auth, optionalAuth } = require('../middleware/auth');
 
 const router = express.Router();
 
-// Helper function to build filters (clean and readable)
 const buildFilters = (query) => {
     const filters = {};
     
-    // Hierarchical filters
     if (query.state) filters.state = query.state;
     if (query.district) filters.district = query.district;
     if (query.block) filters.block = query.block;
     if (query.village) filters.village = query.village;
     
-    // Additional filters
     if (query.management) filters.management = query.management;
     if (query.location) filters.location = query.location;
     if (query.school_type) filters.school_type = query.school_type;
     
-    // Search filter
     if (query.search) {
         filters.$or = [
             { school_name: { $regex: query.search, $options: 'i' } },
@@ -30,7 +26,6 @@ const buildFilters = (query) => {
     return filters;
 };
 
-// Helper function to build pagination
 const buildPagination = (query) => {
     const page = parseInt(query.page) || 1;
     const limit = parseInt(query.limit) || 20;
@@ -39,14 +34,11 @@ const buildPagination = (query) => {
     return { page, limit, skip };
 };
 
-// @route   GET /api/data
-// @desc    Get schools with filters and pagination
 router.get('/', optionalAuth, async (req, res) => {
     try {
         const filters = buildFilters(req.query);
         const { page, limit, skip } = buildPagination(req.query);
 
-        // Get total count and schools in parallel
         const [total, schools] = await Promise.all([
             School.countDocuments(filters),
             School.find(filters)
@@ -56,7 +48,6 @@ router.get('/', optionalAuth, async (req, res) => {
                 .select('-__v')
         ]);
 
-        // Calculate pagination info
         const totalPages = Math.ceil(total / limit);
         const hasNextPage = page < totalPages;
         const hasPrevPage = page > 1;
@@ -81,8 +72,6 @@ router.get('/', optionalAuth, async (req, res) => {
     }
 });
 
-// @route   GET /api/data/distribution
-// @desc    Get distribution data for charts
 router.get('/distribution', async (req, res) => {
     try {
         const filters = buildFilters(req.query);
@@ -97,13 +86,10 @@ router.get('/distribution', async (req, res) => {
     }
 });
 
-// @route   GET /api/data/filters
-// @desc    Get filter options for dropdowns
 router.get('/filters', async (req, res) => {
     try {
         const { state, district, block } = req.query;
 
-        // Get filter options efficiently
         const [states, districts, blocks, villages] = await Promise.all([
             School.distinct('state'),
             state ? School.distinct('district', { state }) : [],
@@ -126,13 +112,10 @@ router.get('/filters', async (req, res) => {
     }
 });
 
-// @route   POST /api/data
-// @desc    Create new school
 router.post('/', auth, async (req, res) => {
     try {
         const schoolData = req.body;
 
-        // Check if UDISE code exists
         const existingSchool = await School.findOne({ udise_code: schoolData.udise_code });
         if (existingSchool) {
             return res.status(400).json({
@@ -164,8 +147,6 @@ router.post('/', auth, async (req, res) => {
     }
 });
 
-// @route   GET /api/data/:id
-// @desc    Get specific school
 router.get('/:id', async (req, res) => {
     try {
         const school = await School.findById(req.params.id);
@@ -193,14 +174,11 @@ router.get('/:id', async (req, res) => {
     }
 });
 
-// @route   PUT /api/data/:id
-// @desc    Update school
 router.put('/:id', auth, async (req, res) => {
     try {
         const updates = req.body;
         const schoolId = req.params.id;
 
-        // Check UDISE code uniqueness
         if (updates.udise_code) {
             const existingSchool = await School.findOne({ 
                 udise_code: updates.udise_code,
@@ -247,8 +225,6 @@ router.put('/:id', auth, async (req, res) => {
     }
 });
 
-// @route   DELETE /api/data/:id
-// @desc    Delete school
 router.delete('/:id', auth, async (req, res) => {
     try {
         const school = await School.findByIdAndDelete(req.params.id);
