@@ -67,4 +67,6 @@ const optionalAuth = async (req, res, next) => {
     }
 };
 
+// Simple auth middleware as per JD requirements
+// All /api/data/* routes must require a valid JWT
 module.exports = { auth, optionalAuth }; 

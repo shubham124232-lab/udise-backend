@@ -15,10 +15,12 @@ const userSchema = new mongoose.Schema({
         required: [true, 'Password is required'],
         minlength: [6, 'Password must be at least 6 characters long']
     },
-    role: {
+    name: {
         type: String,
-        enum: ['admin', 'user'],
-        default: 'user'
+        trim: true,
+        default: function() {
+            return this.email.split('@')[0];
+        }
     },
     isActive: {
         type: Boolean,
@@ -52,5 +54,9 @@ userSchema.methods.toJSON = function() {
     delete user.password;
     return user;
 };
+
+// Indexes
+userSchema.index({ email: 1 });
+userSchema.index({ isActive: 1 });
 
 module.exports = mongoose.model('User', userSchema); 

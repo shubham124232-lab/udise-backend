@@ -15,7 +15,7 @@ const generateToken = (userId) => {
 };
 
 // @route   POST /api/auth/signup
-// @desc    Register a new user
+// @desc    Register user (store hashed password) - JD Requirement
 // @access  Public
 router.post('/signup', async (req, res) => {
     try {
@@ -46,7 +46,9 @@ router.post('/signup', async (req, res) => {
         const user = new User({
             email,
             password,
-            role: role || 'user'
+            name: email.split('@')[0], // Use email prefix as name
+            role: role || 'user',
+            permissions: ['view_schools']
         });
 
         await user.save();
@@ -55,11 +57,11 @@ router.post('/signup', async (req, res) => {
         const token = generateToken(user._id);
 
         res.status(201).json({
-            message: 'User created successfully',
+            message: 'User registered successfully',
             user: {
                 id: user._id,
                 email: user.email,
-                role: user.role
+                name: user.name
             },
             token
         });
@@ -80,8 +82,8 @@ router.post('/signup', async (req, res) => {
     }
 });
 
-// @route   POST /api/auth/login
-// @desc    Authenticate user & get token
+// @route   POST /api/auth/login  
+// @desc    Login with email & password → return JWT - JD Requirement
 // @access  Public
 router.post('/login', async (req, res) => {
     try {
@@ -117,6 +119,10 @@ router.post('/login', async (req, res) => {
             });
         }
 
+        // Update last login
+        user.last_login = new Date();
+        await user.save();
+
         // Generate token
         const token = generateToken(user._id);
 
@@ -125,7 +131,7 @@ router.post('/login', async (req, res) => {
             user: {
                 id: user._id,
                 email: user.email,
-                role: user.role
+                name: user.name
             },
             token
         });
