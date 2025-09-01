@@ -10,8 +10,12 @@ dotenv.config();
 
 const app = express();
 
-// Middleware
-app.use(cors());
+const corsOptions = {
+  origin: 'https://udise-frontend.vercel.app/', // Your frontend domain
+  credentials: true,
+};
+
+app.use(cors(corsOptions));
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
