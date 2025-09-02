@@ -367,13 +367,13 @@ router.get('/distribution', auth, async (req, res) => {
     const distribution = await School.getDistribution(filters);
 
     res.json({
-      success: true,
-      data: {
+      // success: true,
+      // data: {
         managementTypeDistribution: distribution.managementTypeDistribution,
         locationDistribution: distribution.locationDistribution,
         schoolTypeDistribution: distribution.schoolTypeDistribution,
         totalSchools: distribution.totalSchools || 0,
-      },
+      // },
     });
   } catch (error) {
     console.error('Distribution data error:', error);
