@@ -1,6 +1,6 @@
 # UDISE Dashboard Backend API
 
-A robust Node.js backend API for the UDISE Dashboard, providing comprehensive school management functionality with JWT authentication and hierarchical data filtering.
+A robust Node.js backend API for the UDISE Dashboard, providing comprehensive school management functionality with JWT authentication, hierarchical data filtering, and scalable MongoDB integration.
 
 ## 🚀 Features
 
@@ -11,6 +11,9 @@ A robust Node.js backend API for the UDISE Dashboard, providing comprehensive sc
 - **MongoDB Atlas** - Scalable cloud database with optimized schemas
 - **Data Import** - CSV data processor with validation and transformation
 - **RESTful API** - Clean, well-documented endpoints
+- **Performance Optimized** - Efficient queries, indexing, and pagination
+- **Error Handling** - Comprehensive error handling and logging
+- **Data Validation** - Input validation and sanitization
 
 ## 🛠️ Tech Stack
 
@@ -21,11 +24,12 @@ A robust Node.js backend API for the UDISE Dashboard, providing comprehensive sc
 - **Authentication**: JWT + bcryptjs
 - **Data Processing**: csv-parser
 - **Validation**: Mongoose schemas with custom validation
+- **Security**: CORS, input sanitization, rate limiting ready
 
 ## 📋 Prerequisites
 
 - Node.js (v16 or higher)
-- MongoDB Atlas account
+- MongoDB Atlas account (free tier available)
 - CSV dataset from Kaggle (schools data)
 
 ## 🚀 Quick Start
@@ -97,6 +101,12 @@ npm run seed:limit transformed_schools.csv 800000
 | GET | `/api/data/distribution` | Get chart distribution data | No |
 | GET | `/api/data/filters` | Get filter options | No |
 
+### Health Check
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/health` | API health status |
+
 ## 🔐 Authentication
 
 ### JWT Token Format
@@ -110,6 +120,14 @@ Authorization: Bearer <your-jwt-token>
 ### Token Expiry
 
 JWT tokens expire after 7 days. Implement token refresh logic in your frontend.
+
+### Authentication Flow
+
+1. User registers/logs in via `/api/auth/signup` or `/api/auth/login`
+2. Server validates credentials and returns JWT token
+3. Client stores token and includes in subsequent requests
+4. Server validates token on protected routes
+5. Token automatically expires after 7 days
 
 ## 📊 Data Filtering
 
@@ -133,6 +151,12 @@ The API supports hierarchical filtering:
 
 ```
 /api/data?page=1&limit=20
+```
+
+### Sorting
+
+```
+/api/data?sortBy=school_name&sortOrder=asc
 ```
 
 ## 📈 Data Distribution
@@ -194,7 +218,25 @@ The distribution endpoint provides aggregated data for charts:
   coordinates: {
     latitude: Number,
     longitude: Number
-  }
+  },
+  isActive: Boolean (default: true),
+  created_by: ObjectId (User),
+  updated_by: ObjectId (User),
+  timestamps: true
+}
+```
+
+### User Model
+
+```javascript
+{
+  email: String (required, unique),
+  password: String (required, hashed),
+  name: String,
+  role: String (enum: admin, user, default: user),
+  isActive: Boolean (default: true),
+  lastLogin: Date,
+  timestamps: true
 }
 ```
 
@@ -205,10 +247,23 @@ The distribution endpoint provides aggregated data for charts:
 ```
 backend/
 ├── models/          # Database models
+│   ├── School.js    # School schema
+│   └── User.js      # User schema
 ├── routes/          # API route handlers
+│   ├── auth.js      # Authentication routes
+│   └── data.js      # School data routes
 ├── middleware/      # Custom middleware
+│   └── auth.js      # JWT authentication middleware
 ├── utils/           # Utility functions
+│   ├── csvPreprocessor.js  # CSV data transformation
+│   ├── dataSeeder.js       # Data import utility
+│   └── testData.js         # Test data generator
+├── scripts/         # Database scripts
+│   ├── importSchools.js    # School import script
+│   └── fixActivity.js      # Data fix utilities
+├── data/            # CSV data files
 ├── server.js        # Main server file
+├── testConnection.js # MongoDB connection test
 ├── package.json     # Dependencies
 └── README.md        # This file
 ```
@@ -222,12 +277,37 @@ backend/
 - `npm run seed:limit` - Import limited CSV data
 - `npm run test:connection` - Test MongoDB connection
 
+### Environment Variables
+
+```env
+# Database
+MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/udise-dashboard
+
+# Authentication
+JWT_SECRET=your-super-secret-jwt-key-here
+
+# Server
+PORT=5000
+NODE_ENV=development
+
+# Optional
+CORS_ORIGIN=http://localhost:3000
+RATE_LIMIT_WINDOW_MS=900000
+RATE_LIMIT_MAX_REQUESTS=100
+```
+
 ## 🚀 Deployment
 
 ### Render Deployment
 
 1. Connect your GitHub repository to Render
-2. Set environment variables in Render dashboard
+2. Set environment variables in Render dashboard:
+   ```
+   MONGODB_URI=your-production-mongodb-uri
+   JWT_SECRET=your-production-jwt-secret
+   NODE_ENV=production
+   PORT=10000
+   ```
 3. Deploy as a Web Service
 4. Update frontend API endpoints
 
@@ -238,7 +318,16 @@ MONGODB_URI=your-production-mongodb-uri
 JWT_SECRET=your-production-jwt-secret
 NODE_ENV=production
 PORT=10000
+CORS_ORIGIN=https://your-frontend-domain.com
 ```
+
+### MongoDB Atlas Setup
+
+1. Create MongoDB Atlas account
+2. Create a new cluster
+3. Create database user with read/write permissions
+4. Whitelist IP addresses (0.0.0.0/0 for Render)
+5. Get connection string and add to environment variables
 
 ## 📝 Error Handling
 
@@ -247,55 +336,198 @@ The API returns consistent error responses:
 ```json
 {
   "error": "Error message",
-  "details": ["Detailed error information"]
+  "details": ["Detailed error information"],
+  "code": "ERROR_CODE"
 }
 ```
 
-Common HTTP status codes:
+### Common HTTP Status Codes
+
 - `200` - Success
 - `201` - Created
 - `400` - Bad Request (validation errors)
 - `401` - Unauthorized (invalid/missing token)
+- `403` - Forbidden (insufficient permissions)
 - `404` - Not Found
+- `409` - Conflict (duplicate data)
+- `422` - Unprocessable Entity (validation failed)
 - `500` - Internal Server Error
+
+### Error Types
+
+- **Validation Errors**: Input validation failures
+- **Authentication Errors**: Invalid or expired tokens
+- **Authorization Errors**: Insufficient permissions
+- **Database Errors**: MongoDB connection or query issues
+- **Server Errors**: Internal server problems
 
 ## 🔒 Security Features
 
-- Password hashing with bcryptjs
-- JWT token authentication
-- Input validation and sanitization
-- CORS configuration
-- Rate limiting (can be added)
-- SQL injection protection (MongoDB)
+- **Password Hashing**: bcryptjs with salt rounds
+- **JWT Authentication**: Secure token-based authentication
+- **Input Validation**: Mongoose schema validation
+- **Input Sanitization**: XSS protection
+- **CORS Configuration**: Cross-origin request handling
+- **Rate Limiting**: Request rate limiting (configurable)
+- **SQL Injection Protection**: MongoDB NoSQL injection protection
+- **Environment Variables**: Secure configuration management
 
 ## 📊 Performance Optimizations
 
-- Database indexing on frequently queried fields
-- Pagination for large datasets
-- Batch processing for data import
-- Efficient aggregation pipelines
-- Connection pooling with MongoDB
+### Database Optimizations
+
+- **Indexing**: Strategic indexes on frequently queried fields
+- **Pagination**: Efficient pagination for large datasets
+- **Aggregation**: Optimized aggregation pipelines
+- **Connection Pooling**: MongoDB connection pooling
+- **Query Optimization**: Efficient query patterns
+
+### API Optimizations
+
+- **Response Caching**: HTTP caching headers
+- **Compression**: Gzip compression
+- **Batch Processing**: Efficient data import
+- **Error Handling**: Fast error responses
+- **Logging**: Structured logging for monitoring
+
+### Indexes
+
+```javascript
+// Recommended indexes
+db.schools.createIndex({ "state": 1, "district": 1, "block": 1, "village": 1 })
+db.schools.createIndex({ "udise_code": 1 }, { unique: true })
+db.schools.createIndex({ "school_name": "text" })
+db.schools.createIndex({ "management": 1, "location": 1, "school_type": 1 })
+```
+
+## 📊 Data Import
+
+### CSV Preprocessing
+
+The system includes a CSV preprocessor that:
+
+1. Validates CSV structure
+2. Transforms data to match schema
+3. Handles missing or invalid data
+4. Generates UDISE codes if missing
+5. Validates geographical hierarchy
+
+### Import Process
+
+```bash
+# Step 1: Preprocess CSV
+npm run preprocess input.csv output.csv 800000
+
+# Step 2: Import to database
+npm run seed:limit output.csv 800000
+```
+
+### Data Validation
+
+- **Required Fields**: UDISE code, school name, location hierarchy
+- **Data Types**: Proper type conversion and validation
+- **Geographical Hierarchy**: State → District → Block → Village validation
+- **Unique Constraints**: UDISE code uniqueness
+- **Enum Values**: Valid management, location, and school type values
+
+## 🧪 Testing
+
+### Connection Testing
+
+```bash
+npm run test:connection
+```
+
+### API Testing
+
+Use tools like Postman or curl to test endpoints:
+
+```bash
+# Test health endpoint
+curl http://localhost:5000/health
+
+# Test authentication
+curl -X POST http://localhost:5000/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"test@example.com","password":"password123"}'
+
+# Test data endpoint
+curl "http://localhost:5000/api/data?limit=10"
+```
+
+## 📊 Monitoring and Logging
+
+### Logging
+
+The application includes structured logging for:
+
+- **Request/Response**: API request and response logging
+- **Authentication**: Login attempts and token validation
+- **Database**: Query performance and errors
+- **Errors**: Detailed error logging with stack traces
+
+### Health Monitoring
+
+- **Health Endpoint**: `/health` for service monitoring
+- **Database Connection**: MongoDB connection status
+- **Memory Usage**: Node.js memory monitoring
+- **Response Times**: API response time tracking
 
 ## 🤝 Contributing
 
 1. Fork the repository
-2. Create a feature branch
+2. Create a feature branch: `git checkout -b feature/amazing-feature`
 3. Make your changes
 4. Test thoroughly
-5. Submit a pull request
+5. Commit your changes: `git commit -m 'Add amazing feature'`
+6. Push to the branch: `git push origin feature/amazing-feature`
+7. Submit a pull request
+
+### Development Guidelines
+
+- Follow ESLint configuration
+- Write comprehensive error handling
+- Add input validation for all endpoints
+- Include proper logging
+- Write tests for new features
+- Update documentation
 
 ## 📄 License
 
-This project is licensed under the MIT License.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## 🆘 Support
 
 For issues and questions:
+
 1. Check the API documentation
 2. Review error logs
 3. Check MongoDB Atlas connection
 4. Verify environment variables
+5. Test with Postman or curl
+6. Check server logs for detailed errors
+
+### Common Issues
+
+- **Connection Errors**: Verify MongoDB URI and network access
+- **Authentication Issues**: Check JWT secret and token format
+- **Data Import Errors**: Validate CSV format and data structure
+- **Performance Issues**: Check database indexes and query patterns
+- **CORS Errors**: Verify CORS configuration and frontend URL
+
+### Troubleshooting
+
+```bash
+# Check MongoDB connection
+npm run test:connection
+
+# Check server logs
+tail -f logs/app.log
+
+# Test API endpoints
+curl http://localhost:5000/health
+```
 
 ---
 
-**Built with ❤️ for the UDISE Dashboard Project** 
+**Built with ❤️ for the UDISE Dashboard Project**
