@@ -75,48 +75,82 @@ schoolSchema.index({ school_name: 'text', udise_code: 'text' });
 schoolSchema.index({ isActive: 1 });
 
 // Distribution aggregation method
-schoolSchema.statics.getDistribution = async function (filters = {}) {
-  const pipeline = [
-    { $match: { ...filters, isActive: { $ne: false } } },
-    {
-      $facet: {
-        managementTypeDistribution: [
-          { $group: { _id: '$management', count: { $sum: 1 } } },
-          { $project: { label: '$_id', count: 1, _id: 0 } },
-          { $sort: { count: -1 } },
-        ],
-        locationDistribution: [
-          { $group: { _id: '$location', count: { $sum: 1 } } },
-          { $project: { label: '$_id', count: 1, _id: 0 } },
-          { $sort: { count: -1 } },
-        ],
-        schoolTypeDistribution: [
-          { $group: { _id: '$school_type', count: { $sum: 1 } } },
-          { $project: { label: '$_id', count: 1, _id: 0 } },
-          { $sort: { count: -1 } },
-        ],
-        totalCounts: [
-          { $count: 'total' },
-        ],
-      },
-    },
-    {
-      $project: {
-        managementTypeDistribution: 1,
-        locationDistribution: 1,
-        schoolTypeDistribution: 1,
-        totalSchools: { $arrayElemAt: ['$totalCounts.total', 0] },
-      },
-    },
-  ];
+// schoolSchema.statics.getDistribution = async function (filters = {}) {
+//   const pipeline = [
+//     { $match: { ...filters } },
+//     {
+//       $facet: {
+//         managementTypeDistribution: [
+//           { $group: { _id: '$management', count: { $sum: 1 } } },
+//           { $project: { label: '$_id', count: 1, _id: 0 } },
+//           { $sort: { count: -1 } },
+//         ],
+//         locationDistribution: [
+//           { $group: { _id: '$location', count: { $sum: 1 } } },
+//           { $project: { label: '$_id', count: 1, _id: 0 } },
+//           { $sort: { count: -1 } },
+//         ],
+//         schoolTypeDistribution: [
+//           { $group: { _id: '$school_type', count: { $sum: 1 } } },
+//           { $project: { label: '$_id', count: 1, _id: 0 } },
+//           { $sort: { count: -1 } },
+//         ],
+//         totalCounts: [
+//           { $count: 'total' },
+//         ],
+//       },
+//     },
+//     {
+//       $project: {
+//         managementTypeDistribution: 1,
+//         locationDistribution: 1,
+//         schoolTypeDistribution: 1,
+//         totalSchools: { $arrayElemAt: ['$totalCounts.total', 0] },
+//       },
+//     },
+//   ];
 
-  const [result] = await this.aggregate(pipeline);
-  return result || {
-    managementTypeDistribution: [],
-    locationDistribution: [],
-    schoolTypeDistribution: [],
-    totalSchools: 0,
+//   const [result] = await this.aggregate(pipeline);
+//   return result || {
+//     managementTypeDistribution: [],
+//     locationDistribution: [],
+//     schoolTypeDistribution: [],
+//     totalSchools: 0,
+//   };
+// };
+
+// In models/School.js
+schoolSchema.statics.getDistribution = async function(filters = {}) {
+  // only include active schools unless you want everything
+  const matchStage = { ...filters, isActive: { $ne: false } };
+
+  const [managementTypeDistribution, locationDistribution, schoolTypeDistribution] = await Promise.all([
+    this.aggregate([
+      { $match: matchStage },
+      { $group: { _id: "$management", count: { $sum: 1 } } },
+      { $project: { label: "$_id", count: 1, _id: 0 } }
+    ]),
+    this.aggregate([
+      { $match: matchStage },
+      { $group: { _id: "$location", count: { $sum: 1 } } },
+      { $project: { label: "$_id", count: 1, _id: 0 } }
+    ]),
+    this.aggregate([
+      { $match: matchStage },
+      { $group: { _id: "$school_type", count: { $sum: 1 } } },
+      { $project: { label: "$_id", count: 1, _id: 0 } }
+    ]),
+  ]);
+
+  const totalSchools = managementTypeDistribution.reduce((sum, d) => sum + d.count, 0);
+
+  return {
+    managementTypeDistribution,
+    locationDistribution,
+    schoolTypeDistribution,
+    totalSchools,
   };
 };
+
 
 module.exports = mongoose.model('School', schoolSchema);
