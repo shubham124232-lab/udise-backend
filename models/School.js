@@ -121,7 +121,7 @@ schoolSchema.index({ isActive: 1 });
 
 // In models/School.js
 schoolSchema.statics.getDistribution = async function(filters = {}) {
-  const matchStage = { ...filters };
+  const matchStage = { ...filters, isActive: { $ne: false }  };
 
   const [managementTypeDistribution, locationDistribution, schoolTypeDistribution] = await Promise.all([
     this.aggregate([

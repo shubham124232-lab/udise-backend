@@ -430,9 +430,9 @@ router.get('/filters', async (req, res) => {
 
     const [states, districts, blocks, villages] = await Promise.all([
       School.distinct('state'),
-      state ? School.distinct('district', { state }) : [],
-      state && district ? School.distinct('block', { state, district }) : [],
-      state && district && block ? School.distinct('village', { state, district, block }) : [],
+      state ? School.distinct('district', { state, isActive: { $ne: false } }) : [],
+      state && district ? School.distinct('block', { state, district, isActive: { $ne: false } }) : [],
+      state && district && block ? School.distinct('village', { state, district, block, isActive: { $ne: false } }) : [],
     ]);
 
     res.json({
