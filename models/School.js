@@ -77,7 +77,7 @@ schoolSchema.index({ isActive: 1 });
 // Distribution aggregation method
 schoolSchema.statics.getDistribution = async function (filters = {}) {
   const pipeline = [
-    { $match: { ...filters, isActive: true } },
+    { $match: { ...filters, isActive: { $ne: false } } },
     {
       $facet: {
         managementTypeDistribution: [

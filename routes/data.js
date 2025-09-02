@@ -13,7 +13,7 @@ const validSchoolStatus = ['Operational', 'Permanently Closed', 'Other'];
 
 // Helper function to build hierarchical filters
 const buildHierarchicalFilters = (query) => {
-  const filters = { isActive: true };
+  const filters = { isActive: { $ne: false } };
 
   if (query.state) {
     filters.state = query.state;
@@ -364,10 +364,10 @@ router.get('/filters', auth, async (req, res) => {
     if (block) filters.block = block;
 
     const [states, districts, blocks, villages] = await Promise.all([
-      School.distinct('state', { isActive: true }),
-      state ? School.distinct('district', { state, isActive: true }) : [],
-      state && district ? School.distinct('block', { state, district, isActive: true }) : [],
-      state && district && block ? School.distinct('village', { state, district, block, isActive: true }) : [],
+      School.distinct('state', { isActive: { $ne: false } }),
+      state ? School.distinct('district', { state, isActive: { $ne: false } }) : [],
+      state && district ? School.distinct('block', { state, district, isActive: { $ne: false } }) : [],
+      state && district && block ? School.distinct('village', { state, district, block, isActive: { $ne: false } }) : [],
     ]);
 
     res.json({
