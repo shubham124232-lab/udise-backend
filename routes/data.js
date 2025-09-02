@@ -351,17 +351,49 @@ router.get('/distribution', auth, async (req, res) => {
   }
 });
 
+// // @route   GET /api/data/filters
+// // @desc    Get Filter Options for Hierarchical Dropdowns
+// // @access  Private (JWT required)
+// router.get('/filters', auth, async (req, res) => {
+//   try {
+//     const { state, district, block } = req.query;
+
+//     const filters = { isActive: true };
+//     if (state) filters.state = state;
+//     if (district) filters.district = district;
+//     if (block) filters.block = block;
+
+//     const [states, districts, blocks, villages] = await Promise.all([
+//       School.distinct('state', { isActive: { $ne: false } }),
+//       state ? School.distinct('district', { state, isActive: { $ne: false } }) : [],
+//       state && district ? School.distinct('block', { state, district, isActive: { $ne: false } }) : [],
+//       state && district && block ? School.distinct('village', { state, district, block, isActive: { $ne: false } }) : [],
+//     ]);
+
+//     res.json({
+//       success: true,
+//       data: {
+//         states: states.sort(),
+//         districts: districts.sort(),
+//         blocks: blocks.sort(),
+//         villages: villages.sort(),
+//       },
+//     });
+//   } catch (error) {
+//     console.error('Filter options error:', error);
+//     res.status(500).json({
+//       success: false,
+//       error: 'Internal server error while fetching filter options',
+//     });
+//   }
+// });
+
 // @route   GET /api/data/filters
 // @desc    Get Filter Options for Hierarchical Dropdowns
-// @access  Private (JWT required)
-router.get('/filters', auth, async (req, res) => {
+// @access  Public
+router.get('/filters', async (req, res) => {
   try {
     const { state, district, block } = req.query;
-
-    const filters = { isActive: true };
-    if (state) filters.state = state;
-    if (district) filters.district = district;
-    if (block) filters.block = block;
 
     const [states, districts, blocks, villages] = await Promise.all([
       School.distinct('state', { isActive: { $ne: false } }),
@@ -387,5 +419,6 @@ router.get('/filters', auth, async (req, res) => {
     });
   }
 });
+
 
 module.exports = router;
