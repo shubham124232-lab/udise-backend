@@ -14,7 +14,12 @@ const corsOptions = {
   origin: 'https://udise-frontend.vercel.app', // Your frontend domain
   credentials: true,
   methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  allowedHeaders: [
+    'Content-Type',
+    'Authorization',
+    'Cache-Control',
+    'X-Requested-With'
+  ]
 };
 
 app.use(cors(corsOptions));
