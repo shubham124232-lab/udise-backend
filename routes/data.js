@@ -325,6 +325,39 @@ router.delete('/:id', auth, async (req, res) => {
   }
 });
 
+// @route   PATCH /api/data/fix-activity
+// @desc    Bulk update all school records' isActive based on status
+// @access  Public (no auth)
+router.patch("/fix-activity", async (req, res) => {
+  try {
+    // Set isActive = false where permanently closed
+    const closedResult = await School.updateMany(
+      { school_status: "Permanently Closed" },
+      { $set: { isActive: false } }
+    );
+
+    // Set isActive = true where not permanently closed
+    const activeResult = await School.updateMany(
+      { school_status: { $ne: "Permanently Closed" } },
+      { $set: { isActive: true } }
+    );
+
+    res.json({
+      success: true,
+      message: "School records updated based on status",
+      permanentlyClosed: closedResult.modifiedCount,
+      activated: activeResult.modifiedCount,
+    });
+  } catch (error) {
+    console.error("Bulk fix-activity error:", error);
+    res.status(500).json({
+      success: false,
+      error: "Internal server error while fixing school activity",
+    });
+  }
+});
+
+
 // @route   GET /api/data/distribution
 // @desc    Dynamic Distribution Data for Charts
 // @access  Private (JWT required)

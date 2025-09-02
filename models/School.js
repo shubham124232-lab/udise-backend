@@ -140,6 +140,8 @@ schoolSchema.statics.getDistribution = async function(filters = {}) {
       { $project: { label: "$_id", count: 1, _id: 0 } }
     ]),
   ]);
+  
+  // const totalSchools = await this.countDocuments(matchStage);
 
   const totalSchools = managementTypeDistribution.reduce((sum, d) => sum + d.count, 0);
 
