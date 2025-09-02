@@ -13,7 +13,7 @@ const validSchoolStatus = ['Operational', 'Permanently Closed', 'Other'];
 
 // Helper function to build hierarchical filters
 const buildHierarchicalFilters = (query) => {
-  const filters = {};
+  const filters = { isActive: { $ne: false } };
 
   if (query.state) {
     filters.state = query.state;
