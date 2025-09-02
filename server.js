@@ -10,36 +10,14 @@ dotenv.config();
 
 const app = express();
 
-// CORS configuration with allowlist
-const defaultAllowedOrigins = [
-  'https://udise-frontend.vercel.app'
-];
-const envAllowedOrigins = process.env.CORS_ORIGINS
-  ? process.env.CORS_ORIGINS.split(',').map((o) => o.trim()).filter(Boolean)
-  : [];
-const allowedOrigins = Array.from(new Set([...defaultAllowedOrigins, ...envAllowedOrigins]));
-
 const corsOptions = {
-  origin: function (origin, callback) {
-    if (!origin) {
-      // Allow non-browser requests (e.g., curl, server-to-server)
-      return callback(null, true);
-    }
-    const isLocalhost = /^(http:\/\/localhost:\d+|http:\/\/127\.0\.0\.1:\d+)$/.test(origin);
-    const isVercelSubdomain = /\.vercel\.app$/.test(new URL(origin).hostname);
-    if (allowedOrigins.includes(origin) || isLocalhost || isVercelSubdomain) {
-      return callback(null, true);
-    }
-    return callback(new Error(`Not allowed by CORS: ${origin}`));
-  },
+  origin: 'https://udise-frontend.vercel.app', // Your frontend domain
   credentials: true,
   methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
 };
 
 app.use(cors(corsOptions));
-// Ensure preflight responses are handled for all routes
-app.options('*', cors(corsOptions));
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
